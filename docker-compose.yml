@@ -1,0 +1,48 @@
+# Local orchestration of all three services.
+# In production these run on SEPARATE EC2 instances (see README), each from its
+# own Dockerfile. This compose file is for local end-to-end testing.
+#
+# Prereq: build the model + data once so ./artifacts/recommender.joblib exists:
+#     python data/generate_sample.py && python -m src.train --no-wandb
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DDB_LOCAL: "1"
+      MODEL_SOURCE: "local"
+      MODEL_LOCAL_PATH: "artifacts/recommender.joblib"
+      DDB_LOGS_FILE: "artifacts/local_logs.json"
+      DDB_CACHE_FILE: "artifacts/local_cache.json"
+      CACHE_ENABLED: "1"
+    volumes:
+      - ./artifacts:/app/artifacts
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "8501:8501"
+    environment:
+      BACKEND_URL: "http://backend:8000"
+    depends_on:
+      - backend
+
+  monitoring:
+    build:
+      context: .
+      dockerfile: monitoring/Dockerfile
+    ports:
+      - "8502:8502"
+    environment:
+      DDB_LOCAL: "1"
+      DDB_LOGS_FILE: "artifacts/local_logs.json"
+      DDB_CACHE_FILE: "artifacts/local_cache.json"
+    volumes:
+      - ./artifacts:/app/artifacts
+    depends_on:
+      - backend

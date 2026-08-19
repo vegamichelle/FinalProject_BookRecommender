@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+artifacts/
+wandb/
+metrics.json
+data/books.csv
+data/ratings.csv
+*.joblib
+.pytest_cache/
+.ruff_cache/
+.DS_Store

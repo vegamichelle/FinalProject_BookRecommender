@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    env:
+      DDB_LOCAL: "1"
+      MODEL_SOURCE: "local"
+      CACHE_ENABLED: "1"
+      WANDB_DISABLED: "1"
+      PYTHONPATH: ${{ github.workspace }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Generate data + train model (needed by integration tests)
+        run: |
+          python data/generate_sample.py --n-books 200 --n-users 1500
+          python -m src.train --no-wandb
+
+      - name: Run tests
+        run: pytest -q

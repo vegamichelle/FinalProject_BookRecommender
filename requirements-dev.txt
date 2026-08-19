@@ -1,0 +1,5 @@
+# Everything needed to lint, train, and run the full test suite in CI.
+-r backend/requirements.txt
+pytest==8.3.3
+ruff==0.6.9
+wandb==0.18.5
